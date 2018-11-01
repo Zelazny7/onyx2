@@ -1,37 +1,25 @@
-#' @include metric.R
 
-Perf <- setRefClass(
-  "Perf",
-  contains = "VIRTUAL",
-  fields = c(y="vector", w="numeric"),
-  methods = list(
-    initialize = function(y, w=rep(1, length(y))) {
-      y <<- y
-      w <<- w
-      callSuper()
-    },
-    tbl = function(metric, x) tbl_(.self, metric, x)
-  )
-)
+#' @export
+perf_new <- function(y, w=rep(1, length(y)), type=c("binomial", "continuous")) {
+  res <- list(y=y, w=w)
+  type <- match.arg(type)
+  switch(
+    type,
+     binomial = {
+       if(!all(y %in% 0:1)) {
+         stop("binomial perf must only contain 0s and 1s", call. = FALSE)
+       }
+     },
+     {
+       if (any(is.na(y))) stop("y cannot have NA values")
+     })
 
+  class(res) <- c("perf", paste0("perf.", match.arg(type), collapse = ""))
+  res
+}
 
-setGeneric("tbl_", function(perf, metric, x) standardGeneric("tbl_"))
-
-setMethod("tbl_", c("Perf", "Metric", "factor"), function(perf, metric, x) {
-  stop("Must Implement")
-})
-
-
-BinomialPerf <- setRefClass(
-  "BinomialPerf",
-  contains = "Perf",
-  methods=list(
-    initialize = function(...) {
-      callSuper(...)
-      stopifnot(all(y %in% 0:1))
-      # TODO: better error messages
-    }
-  ))
+#' @export
+make_table <- function(perf, x, ...) UseMethod("make_table")
 
 weighted_table_ <- function(x, y, w, names=NULL) {
   ones <- tapply((y == 1) * w, x, sum, na.rm=T)
@@ -41,9 +29,18 @@ weighted_table_ <- function(x, y, w, names=NULL) {
   `colnames<-`(tbl, names)
 }
 
+calc_iv_ <- function(x) {
+  woe <- log(x[,'%1']/x[,'%0'])
+  woe[is.nan(woe) | is.infinite(woe)] <- 0
+  iv <- (x[,'%1'] - x[,'%0']) * woe
 
-setMethod("tbl_", c("BinomialPerf", "MetricIV", "factor"), function(perf, metric, x) {
-  ### N, #1, #0, %N, %1, %0, P(1), ... Metric stuff
+  res <- cbind(WoE=woe, IV=iv)
+
+  rbind(res, 'Total'=c(0, sum(res[,'IV'])))
+}
+
+#' @export
+make_table.perf.binomial <- function(perf, x, ...) {
   tbl <- weighted_table_(x, perf$y, perf$w, names=c("N", "#1", "#0"))
 
   pt <- prop.table(tbl, margin = 2L)
@@ -52,20 +49,48 @@ setMethod("tbl_", c("BinomialPerf", "MetricIV", "factor"), function(perf, metric
   res[is.nan(res) | is.infinite(res)] <- 0
 
   ## pass info to the metric to calculate what it needs
-  metric_cols <- metric$tbl(res)
+  iv_cols <- calc_iv_(res)
 
   ## add totals for res
   tot <- colSums(res)
   tot["P(1)"] <- tot["#1"]/tot["N"]
 
   ## Combine everything
-  cbind(
-    rbind(res, Total=tot),
-    metric_cols)
+  cbind(rbind(res, Total=tot), iv_cols)
+}
 
-})
+tbl_continuous_ <- function(x, y, w) {
+  z <- tapply(perf$w, x, sum)
+  w <- tapply(perf$w * y, x, sum)
+  tbl <- cbind(N=z, Perf=w)
+  tbl[is.na(tbl)] <- 0
+  tbl
+}
 
+calc_var_ <- function(x, y, w) {
+  tbl <- c(
+    mapply(Hmisc::wtd.var, split(y, x), split(w, x)),
+    Total=Hmisc::wtd.var(y, w))
+  tbl[is.na(tbl)] <- 0
+  tbl
+}
 
+#' @export
+make_table.perf.continuous <- function(perf, x, ...) {
+  tbl <- tbl_continuous_(x, perf$y, perf$w)
 
-ContinuousPerf <- setRefClass("ContinuousPerf", contains = "Perf")
+  pt <- prop.table(tbl, margin = 2L)
+  colnames(pt) <- c("%N", "%Perf")
+  res <- cbind(tbl, pt, Mean=tbl[,"Perf"]/tbl[,"N"])
+  res[is.nan(res) | is.infinite(res)] <- 0
 
+  ## pass info to the metric to calculate what it needs
+  variance <- calc_var_(x, perf$y, perf$w)
+
+  ## add totals for res
+  tot <- colSums(res)
+  tot["Mean"] <- tot["Perf"]/tot["N"]
+
+  ## Combine everything
+  cbind(rbind(res, Total=tot), Variance=variance)
+}
