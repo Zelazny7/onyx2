@@ -1,27 +1,3 @@
-
-d <- GBMDiscretizer$new()
-cps <- d$discretize(x=titanic$Age, y=titanic$Fare, depth = 3)
-
-
-
-
-
-metric <- MetricIV$new()
-
-bins <- onyx::bin(titanic["Fare"], titanic$Survived, max.bin = 4)
-
-perf$tbl(metric, addNA(cut(titanic$Age, cps)))
-
-bins$variables$Fare
-
-microbenchmark::microbenchmark()
-
-perf$tbl(metric, titanic$Sex)
-
-perf$tbl(metric, factor(mtcars$mpg))
-
-
-
 ### TESTING STUFF ###
 
 tf <- new_numeric_transform(0:10)
@@ -30,12 +6,24 @@ tf$mapping[[10]] <- list(label="j,k,l", members=c("j","k","l"))
 tf$mapping[11:12] <- NULL
 predict(tf, letters)
 
+x <- runif(1e6)
+y <- rbinom(1e6, 1, 0.25)
+
+pf <- new_perf(y)
 ## get a factor transform
+tf <- new_transform_numeric(quantile(x, seq(0.1, 0.9, 0.1)), exceptions = -1)
+#tf <- collapse(tf, 1:2)
+v <- new_variable("Random", x=x, tf)
 
-tf <- new_discrete_transform(levels(titanic$Pclass))
-tf <- collapse(tf, 1:2)
+v2 <- collapse(v, 1:5)
+tbl <- make_table(v, pf)
 
-x <- predict(tf, titanic$Pclass)
+x <- mtcars$mpg
+tf <- new_transform_numeric(c(10,20,30), exceptions = c(21, 30.4, 15.2))
+
+predict(tf, x)
+
+table(predict(v2, x))
 
 perf <- perf_new(y=titanic$Fare, type="continuous")
 make_table(perf, x)
