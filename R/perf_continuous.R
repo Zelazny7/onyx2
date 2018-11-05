@@ -4,8 +4,8 @@ new_perf_continuous <- function(y, w) {
 }
 
 tbl_continuous_ <- function(x, y, w) {
-  z <- tapply(perf$w, x, sum)
-  w <- tapply(perf$w * y, x, sum)
+  z <- tapply(w, x, sum)
+  w <- tapply(w * y, x, sum)
   tbl <- cbind(N=z, Perf=w)
   tbl[is.na(tbl)] <- 0
   tbl

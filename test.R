@@ -1,15 +1,10 @@
 ### TESTING STUFF ###
 
-tf <- new_numeric_transform(0:10)
-tf <- new_discrete_transform(letters)
-tf$mapping[[10]] <- list(label="j,k,l", members=c("j","k","l"))
-tf$mapping[11:12] <- NULL
-predict(tf, letters)
-
 x <- runif(1e6)
 y <- rbinom(1e6, 1, 0.25)
 
 pf <- new_perf(y)
+
 ## get a factor transform
 tf <- new_transform_numeric(quantile(x, seq(0.1, 0.9, 0.1)), exceptions = -1)
 #tf <- collapse(tf, 1:2)
@@ -25,6 +20,31 @@ predict(tf, x)
 
 table(predict(v2, x))
 
-perf <- perf_new(y=titanic$Fare, type="continuous")
-make_table(perf, x)
+data(titanic, package="onyx")
+
+perf <- new_perf(y=titanic$Fare, type="continuous")
+make_table(perf, titanic$Pclass)
+
+perf <- list(
+  Fare = new_perf(titanic$Fare, type = "continuous"),
+  Survived = new_perf(titanic$Survived, type="binomial")
+)
+
+bins <- bin(titanic[-1], perf, var.monotone=0)
+
+# bins$variables
+
+bins$display_variable("Fare")
+
+
+p <- mapply(predict, bins, titanic[-1], SIMPLIFY = FALSE)
+
+## make tables
+tbls <- lapply(p, function(x) make_table(pf, x))
+
+
+
+
+
+
 

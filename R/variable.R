@@ -23,7 +23,7 @@ new_variable <- function(name, x, transform) {
 
 
 #' @export
-make_table.variable <- memoise(function(v, perf) {
+make_table.variable <- memoise::memoise(function(v, perf) {
   make_table(perf, predict(v$tf, v$x))
 })
 

@@ -16,6 +16,9 @@ discretize_gbm <- function(x, y, w=rep(1, length(x)), interaction.depth=5,
                            min.cnt=10, var.monotone=0, depth=5, shrinkage=1,
                            bag.fraction=1, distribution=infer_distro(y),
                            verbose=FALSE, ...) {
+
+
+
   mod <- tryCatch({
 
     capture.output(

@@ -1,0 +1,27 @@
+#' @include Scorecard.R
+
+#' @export
+bin <- function(x, perf, discretize, exceptions, ...) UseMethod("bin")
+
+#' @export
+bin.default <- function(x, perf, discretize=discretize_gbm, exceptions=numeric(), name="", ...) {
+  cuts <- discretize(x, perf$y, perf$w, ...)
+  tf <- new_transform_numeric(cuts, exceptions = exceptions)
+  new_variable(name = name, transform = tf, x = x)
+}
+
+#' @export
+bin.factor <- function(x, perf, discretize, name="", ...) {
+  tf <- new_transform_discrete(levels(x))
+  new_variable(name = name, transform = tf, x = x)
+}
+
+#' @export
+bin.data.frame <- function(x, perf, discretize=discretize_gbm, exceptions=numeric(), ...) {
+  if (!is.list(perf)) perf <- list(perf)
+  vars <- list()
+  for (nm in names(x)) {
+    vars[[nm]] <- bin(x[[nm]], perf[[1]], discretize, exceptions=exceptions, name=nm, ...)
+  }
+  Scorecard(vars, perf)
+}
