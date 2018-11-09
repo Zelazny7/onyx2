@@ -25,23 +25,61 @@ table(predict(v2, x))
 
 data(titanic, package="onyx")
 
-perf <- new_perf(y=titanic$Fare, type="continuous")
-make_table(perf, titanic$Pclass)
+data(mtcars)
 
-perf <- list(
-  Fare = new_perf(titanic$Fare, type = "continuous"),
-  Survived = new_perf(titanic$Survived, type="binomial")
-)
+perf <- new_perf(y=mtcars$mpg, type="continuous")
+# make_table(perf, mtcars$Pclass)
 
-bins <- bin(titanic[-1], perf, var.monotone=0)
+# perf <- list(
+#   Fare = new_perf(titanic$Fare, type = "continuous"),
+#   Survived = new_perf(titanic$Survived, type="binomial")
+# )
 
+bins <- bin(mtcars[-1], list(mpg=perf), var.monotone=0)
+bins$fit(method = "binnr")
+bins$..neutralize("disp", 1:2)
+bins$fit(method = "onyx")
+
+bins$models$model1$transforms$disp$neutral
+bins$models$model2$transforms$disp$neutral
+
+bins$select("model2")
+bins$..display_variable("disp")
+bins$select("model1")
+bins$..display_variable("disp")
+
+
+bins
+
+
+bins$collapse("disp", 1:2)
+
+bins$predict(type="sparse")
+bins$fit(method = "onyx")
+
+#p = predict(mod, bins$predict(type="sparse"))
+
+
+
+bins$variables$disp <- neutralize(bins$variables$disp, 1:2)
+
+bins$variables$disp <- undo(bins$variables$disp)
+bins$..display_variable("disp")
+
+
+length(bins$variables$disp$hist)
+
+bins$variables$disp$hist[[1]]
 
 
 # bins$variables
+# bins$variables$disp$tf
 
-bins$..display_variable("Embarked")
+bins$..display_variable("cyl")
 bins$..select_performance("Survived")
 
+bins$predict(type="sparse")
+predict(bins$variables$disp, newx = mtcars$disp, type = "sparse")
 
 predict(bins$variables$Embarked, newx = bins$variables$Embarked$x, perf=perf$Fare, type = "perf")
 

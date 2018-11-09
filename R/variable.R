@@ -23,14 +23,18 @@ new_variable <- function(name, x, transform) {
 
 
 #' @export
-make_table.variable <- memoise::memoise(function(v, perf) {
-  make_table(perf, predict(v$tf, v$x))
-})
+make_table.variable <- function(v, perf) {
+  tbl <- make_table(perf, predict(v$tf, v$x))
+  neutral <- setNames(character(nrow(tbl)), row.names(tbl))
+  neutral[unlist(v$tf$neutral)] <- "*"
+  res <- data.frame(tbl, Neu=neutral, check.names = F, stringsAsFactors = F)
+  do.call(format, c(x=list(res), getOption("onyx2_format", default = list())))
+}
 
 
 #' @export
 collapse.variable <- function(x, i) {
-  x$hist <- append(x, x$tf)
+  x$hist <- append(x$hist, list(x$tf))
   x$tf <- collapse(x$tf, i)
   x
 }
@@ -38,36 +42,52 @@ collapse.variable <- function(x, i) {
 
 #' @export
 expand.variable <- function(x, i) {
-  x$hist <- append(x, x$tf)
+  x$hist <- append(x$hist, list(x$tf))
   x$tf <- expand(x$tf, i)
   x
 }
 
 
 #' @export
+neutralize.variable <- function(x, i) {
+  x$hist <- append(x$hist, list(x$tf))
+  x$tf <- neutralize(x$tf, i)
+  x
+}
+
+#' @export
+undo <- function(v) {
+  if (identical(length(v$hist), 0L)) {
+    return(v)
+  } else {
+    v$tf <- tail(v$hist, 1)[[1]]
+    v$hist <- head(v$hist, -1)
+    return(v)
+  }
+}
+
+
+#' @export
 predict.variable <- function(x, newx=x$x, type=c("factor", "sparse", "perf"), perf=NULL) {
 
-  ## can predict ... perf measure?
   f <- predict(x$tf, newx)
   neutral <- match(unlist(x$tf$neutral), levels(f), 0)
-
-  ## TODO:: Pick up here tomorrow
 
   switch(
     match.arg(type),
     factor = f,
-    sparse = Matrix::sparseMatrix(seq_along(f), as.integer(f)),
+    sparse = {
+      res <- Matrix::sparseMatrix(seq_along(f), as.integer(f))
+      if (!all(neutral == 0)) res[,-neutral,drop=FALSE] else res
+    },
     perf = {
       if(is.null(perf)) stop("must supply performance if requesting perf substitution perdiction", call. = F)
 
       ## grab a column from the performance table
       pf <- make_table(perf, f)[,perf_col(perf)]
+      pf[neutral] <- pf[['Total']] ## replace neutralized with "average"
 
-      ## TODO:: need to handle neutral values here ... overrides?
-
-      ## index using factor labels
-      pf[as.character(f)]
-
+      pf[as.character(f)] ## index using factor labels
     }
   )
 

@@ -10,3 +10,17 @@ License: What license is it under?
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.1.0
+Collate: 
+    'Scorecard.R'
+    'aaa.R'
+    'bin.R'
+    'discretize.R'
+    'model.R'
+    'perf.R'
+    'perf_binomial.R'
+    'perf_continuous.R'
+    'transform.R'
+    'transform_discrete.R'
+    'transform_numeric.R'
+    'variable.R'
+    'zzz.R'
