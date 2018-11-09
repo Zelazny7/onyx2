@@ -20,6 +20,9 @@ predict(tf, x)
 
 table(predict(v2, x))
 
+
+##### TEST HERE
+
 data(titanic, package="onyx")
 
 perf <- new_perf(y=titanic$Fare, type="continuous")
@@ -32,15 +35,30 @@ perf <- list(
 
 bins <- bin(titanic[-1], perf, var.monotone=0)
 
+
+
 # bins$variables
 
-bins$display_variable("Fare")
+bins$..display_variable("Embarked")
+bins$..select_performance("Survived")
+
+
+predict(bins$variables$Embarked, newx = bins$variables$Embarked$x, perf=perf$Fare, type = "perf")
+
+bins$predict(type = "sparse")
+
 
 
 p <- mapply(predict, bins, titanic[-1], SIMPLIFY = FALSE)
 
 ## make tables
 tbls <- lapply(p, function(x) make_table(pf, x))
+
+
+
+
+
+
 
 
 

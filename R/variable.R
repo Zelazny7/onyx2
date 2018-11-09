@@ -45,8 +45,34 @@ expand.variable <- function(x, i) {
 
 
 #' @export
-predict.variable <- function(x, newx, type=NULL) {
-  predict(x$tf, newx)
+predict.variable <- function(x, newx=x$x, type=c("factor", "sparse", "perf"), perf=NULL) {
+
+  ## can predict ... perf measure?
+  f <- predict(x$tf, newx)
+  neutral <- match(unlist(x$tf$neutral), levels(f), 0)
+
+  ## TODO:: Pick up here tomorrow
+
+  switch(
+    match.arg(type),
+    factor = f,
+    sparse = Matrix::sparseMatrix(seq_along(f), as.integer(f)),
+    perf = {
+      if(is.null(perf)) stop("must supply performance if requesting perf substitution perdiction", call. = F)
+
+      ## grab a column from the performance table
+      pf <- make_table(perf, f)[,perf_col(perf)]
+
+      ## TODO:: need to handle neutral values here ... overrides?
+
+      ## index using factor labels
+      pf[as.character(f)]
+
+    }
+  )
+
+
+
 }
 
 

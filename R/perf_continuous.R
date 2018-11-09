@@ -39,3 +39,7 @@ make_table.perf_continuous <- function(perf, x, ...) {
   ## Combine everything
   cbind(rbind(res, Total=tot), Variance=variance)
 }
+
+#' @export
+perf_col.perf_continuous <- function(x) "Mean"
+

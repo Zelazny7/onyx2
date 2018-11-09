@@ -43,3 +43,6 @@ make_table.perf_binomial <- function(perf, x, ...) {
   cbind(rbind(res, Total=tot), iv_cols)
 }
 
+
+#' @export
+perf_col.perf_binomial <- function(x) "WoE"

@@ -55,3 +55,24 @@ collapse.transform_numeric <- function(x, i) {
 expand.transform_numeric <- function(x, i) {
   check_inputs(x, i)
 }
+
+#' @export
+neutralize.transform_numeric <- function(x, i) {
+  if (min(i) < 1 | max(i) > length(x$mapping))
+    stop("Must specify values within current range")
+
+  labels <- sapply(x$mapping, "[[", "label")
+  z <- labels[[i]]
+
+  x$neutral <-
+    if (z %in% x$neutral)
+      setdiff(x$neutral, z)
+    else
+      union(x$neutral, z)
+
+  x
+}
+
+
+
+

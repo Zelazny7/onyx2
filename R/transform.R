@@ -28,4 +28,8 @@ collapse <- function(x, i) UseMethod("collapse")
 expand <- function(x, i) UseMethod("expand")
 
 
+#' @export
+neutralize <- function(x, i) UseMethod("neutralize")
+
+
 check_inputs <- function(x, ...) UseMethod("check_inputs")
