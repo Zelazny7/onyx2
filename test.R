@@ -23,84 +23,101 @@ table(predict(v2, x))
 
 ##### TEST HERE
 
+
+#perf <- new_perf(y=titanic$Fare, type="continuous")
+#make_table(perf, titanic$Pclass)
+
 data(titanic, package="onyx")
+perf <- list(
+  Survived = new_perf(titanic$Survived, type="binomial"),
+  Fare = new_perf(titanic$Fare, type = "continuous"))
 
-data(mtcars)
+bins <- bin(titanic[-c(1,7)], perf, var.monotone=0, interaction.depth=1)
 
-perf <- new_perf(y=mtcars$mpg, type="continuous")
-# make_table(perf, mtcars$Pclass)
+bins$..display_variable("Embarked")
+bins$..collapse("Embarked", c(1,3))
 
-# perf <- list(
-#   Fare = new_perf(titanic$Fare, type = "continuous"),
-#   Survived = new_perf(titanic$Survived, type="binomial")
-# )
+bins$..expand("Embarked", 1)
 
-bins <- bin(mtcars[-1], list(mpg=perf), var.monotone=0)
-bins$fit(method = "binnr")
-bins$..neutralize("disp", 1:2)
-bins$fit(method = "onyx")
+bins$..display_variable("Age")
+bins$..expand("Age", 1)
 
-bins$models$model1$transforms$disp$neutral
-bins$models$model2$transforms$disp$neutral
+bins$..set_step(c("Age", "Embarked", "Pclass"), 1)
+bins$fit(titanic, method="onyx", steps = 1)
 
-bins$select("model2")
-bins$..display_variable("disp")
+bins$..display_variable("SibSp")
+bins$..display_variable("Embarked")
+
+bins$..select_performance("Survived")
+bins$fit(titanic, method="binnr")
+
+bins$..display_variable("SibSp")
+bins$..display_variable("Embarked")
+bins$..display_variable("Sex")
+
+p <- bins$predict_model()
+
+mod <- bins$models[[bins$current_model]]
+
+x <- bins$transform(titanic[mod$modelvars], type = "sparse")
+x <- do.call(cbind, x)
+
+p2 <- predict(mod$object, x, s="lambda.min")
+
+
+p <- bins$predict_model()
+
+p1 <- bins$predict_model(titanic)
+
+bins$fit(titanic, method="onyx")
+p2 <- bins$predict_model(titanic)
+
 bins$select("model1")
-bins$..display_variable("disp")
-
-
-bins
-
-
-bins$collapse("disp", 1:2)
-
-bins$predict(type="sparse")
-bins$fit(method = "onyx")
-
-#p = predict(mod, bins$predict(type="sparse"))
+p3 <- bins$predict_model(titanic)
 
 
 
-bins$variables$disp <- neutralize(bins$variables$disp, 1:2)
 
-bins$variables$disp <- undo(bins$variables$disp)
-bins$..display_variable("disp")
+d <- bins$..display_variable("Age")
 
 
-length(bins$variables$disp$hist)
+ins$model
 
-bins$variables$disp$hist[[1]]
+bins$..display_variable("Age")
+
+bins$..collapse("Age", 1:3)
+bins$..display_variable("Age")
+
+bins$..select_performance("Survived")
+bins$fit(titanic, method="onyx")
+
+## verify that predictions are the same from the glmnet object
+
+
+
+
+
+Qp1 <- bins$predict_model()
+
+bins$fit(titanic, method="onyx")
+p2 <- bins$predict_model()
+plot(p1, p2)
+plot(p1, titanic$Fare)
+plot(p2, titanic$Fare)
+
 
 
 # bins$variables
-# bins$variables$disp$tf
 
-bins$..display_variable("cyl")
 bins$..select_performance("Survived")
 
-bins$predict(type="sparse")
-predict(bins$variables$disp, newx = mtcars$disp, type = "sparse")
 
-predict(bins$variables$Embarked, newx = bins$variables$Embarked$x, perf=perf$Fare, type = "perf")
+predict(bins$variables$Embarked, newx = bins$variables$Embarked$x, perf=perf$Fare, type = "sparse")
 
 bins$predict(type = "sparse")
 
 
 
 p <- mapply(predict, bins, titanic[-1], SIMPLIFY = FALSE)
-
-## make tables
-tbls <- lapply(p, function(x) make_table(pf, x))
-
-
-
-
-
-
-
-
-
-
-
 
 

@@ -4,17 +4,21 @@ new_transform <- function() {
   structure(
     list(
       mapping = list(),
-      neutral = list()
+      neutral = list(),
+      weights = NULL
     ),
     class = "transform"
   )
 }
 
+#' @export
+transform <- function(x, y, ...) UseMethod("transform")
+
 
 #' @export
-predict.transform <- function(tf, res, ...) {
-  res <- addNA(res)
-  levels(res) <- c(levels(res), as.character(tf$excepts), "Missing")
+transform.transform <- function(tf, x, ...) {
+  res <- addNA(x)
+  levels(res) <- c(levels(x), as.character(tf$excepts), "Missing")
   res[is.na(res)] <- "Missing"
   res
 }
@@ -25,7 +29,7 @@ collapse <- function(x, i) UseMethod("collapse")
 
 
 #' @export
-expand <- function(x, i) UseMethod("expand")
+expand <- function(x, i, ...) UseMethod("expand")
 
 
 #' @export
@@ -51,3 +55,19 @@ neutralize.transform <- function(x, i) {
 
 
 check_inputs <- function(x, ...) UseMethod("check_inputs")
+
+update_transforms_binnr <- function(tfs, tbls, coefs, perf) {
+  ## loop over coefficients
+  for (v in names(coefs)) {
+    weights <- head(tbls[[v]][,perf], -1) * coefs[[v]]
+    tfs[[v]]$weights <- weights
+  }
+  tfs
+}
+
+update_transforms_onyx <- function(tfs, skeleton, coefs) {
+  ## skeleton is the list of column names by variable that map to coefs
+  weights <- split(coefs, rep(names(skeleton), lengths(skeleton)))
+  for (v in names(weights)) tfs[[v]]$weights <- weights[[v]]
+  tfs
+}

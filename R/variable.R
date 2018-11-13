@@ -24,11 +24,19 @@ new_variable <- function(name, x, transform) {
 
 #' @export
 make_table.variable <- function(v, perf) {
-  tbl <- make_table(perf, predict(v$tf, v$x))
+  tbl <- make_table(perf, transform(v$tf, v$x))
   neutral <- setNames(character(nrow(tbl)), row.names(tbl))
   neutral[unlist(v$tf$neutral)] <- "*"
+
+  ## append model weights
   res <- data.frame(tbl, Neu=neutral, check.names = F, stringsAsFactors = F)
-  do.call(format, c(x=list(res), getOption("onyx2_format", default = list())))
+
+  if (!is.null(v$tf$weights)) {
+    weights <- setNames(numeric(nrow(res)), row.names(res))
+    weights[names(v$tf$weights)] <-v$tf$weights
+    res$Weights <- weights
+  }
+  res
 }
 
 
@@ -41,9 +49,9 @@ collapse.variable <- function(x, i) {
 
 
 #' @export
-expand.variable <- function(x, i) {
+expand.variable <- function(x, i, w) {
   x$hist <- append(x$hist, list(x$tf))
-  x$tf <- expand(x$tf, i)
+  x$tf <- expand(x$tf, i, data=x$x, w=w) ##
   x
 }
 
@@ -68,16 +76,18 @@ undo <- function(v) {
 
 
 #' @export
-predict.variable <- function(x, newx=x$x, type=c("factor", "sparse", "perf"), perf=NULL) {
+transform.variable <- function(x, newx=x$x, type=c("factor", "sparse", "perf"), perf=NULL) {
 
-  f <- predict(x$tf, newx)
+  f <- transform(x$tf, newx)
   neutral <- match(unlist(x$tf$neutral), levels(f), 0)
 
   switch(
     match.arg(type),
     factor = f,
     sparse = {
-      res <- Matrix::sparseMatrix(seq_along(f), as.integer(f))
+      res <- Matrix::sparseMatrix(seq_along(f), as.integer(f),
+                                  dims = c(length(f), length(levels(f))),
+                                  dimnames = list(NULL, levels(f)))
       if (!all(neutral == 0)) res[,-neutral,drop=FALSE] else res
     },
     perf = {

@@ -15,7 +15,8 @@ new_perf <- function(y, w=rep(1, length(y)), type=c("binomial", "continuous")) {
 
 
 #' @export
-make_table <- memoise::memoise(function(perf, x, ...) UseMethod("make_table"))
+make_table <- function(perf, x, ...) UseMethod("make_table")
+#make_table <- memoise::memoise(function(perf, x, ...) UseMethod("make_table"))
 
 
 ## Returns the name of the column to be used for WoE substitution

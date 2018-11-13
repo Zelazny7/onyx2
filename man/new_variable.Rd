@@ -18,3 +18,6 @@ information necessary to bin a variable.}
 A list of the above arguments with a hist element that is a list of
 all changes to the transform.
 }
+\description{
+Variable Container
+}

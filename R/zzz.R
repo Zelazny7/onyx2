@@ -5,5 +5,7 @@
     digits=2,
     nsmall=2,
     big.mark=",",
-    big.interval=3))
+    big.interval=3,
+    scientific=FALSE
+    ))
 }

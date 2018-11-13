@@ -15,12 +15,12 @@ new_transform_discrete <- function(levels) {
 
 
 #' @export
-predict.transform_discrete <- function(tf, x) {
+transform.transform_discrete <- function(tf, x) {
   lvls <- sapply(tf$mapping, "[[", "label")
   mems <- lapply(tf$mapping, "[[", "members")
   res <- factor(x, unlist(mems))
   levels(res) <- setNames(mems, lvls)
-  NextMethod("predict", object=tf, res=res)
+  NextMethod("transform", tf=tf, x=res)
 }
 
 
@@ -40,10 +40,20 @@ collapse.transform_discrete <- function(x, i) {
   mems <- mems[-i]
   mems <- append(mems, comb, after=spot-1L)
   x$mapping <- lapply(mems, make_level_discrete_)
+  x$weights <- NULL
   x
 }
 
 
-expand.transform_discrete <- function(x, i) {
+#' @export
+expand.transform_discrete <- function(x, i, ...) {
   check_inputs(x, i)
+  mems <- lapply(x$mapping, "[[", "members")
+
+  if (length(mems[[i]]) <= 1) return(x)
+
+  mems <- append(mems[-i], unlist(mems[i]), after = i-1)
+  x$mapping <- lapply(mems, make_level_discrete_)
+  x$weights <- NULL
+  x
 }

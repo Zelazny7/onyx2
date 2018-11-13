@@ -21,13 +21,13 @@ new_transform_numeric <- function(cuts, exceptions=numeric()) {
 
 
 #' @export
-predict.transform_numeric <- function(tf, x) {
+transform.transform_numeric <- function(tf, x) {
   cuts <- unique(c(-Inf, sapply(tf$mapping, "[[", "right")))
   lbls <- sapply(tf$mapping, "[[", "label")
   res <- cut(x, cuts, labels = lbls, right = TRUE)
   levels(res) <- c(levels(res), tf$exceptions)
   res[x %in% tf$exceptions] <- as.character(tf$exceptions)
-  NextMethod("predict", object=tf, res=res)
+  NextMethod("transform", tf=tf, x=res)
 }
 
 
@@ -48,12 +48,26 @@ collapse.transform_numeric <- function(x, i) {
   cuts <- sapply(x$mapping, "[[", "right")
   res <- new_transform_numeric(cuts[-i])
   x$mapping <- res$mapping
+  x$weights <- NULL
   x
 }
 
 
-expand.transform_numeric <- function(x, i) {
+#' @export
+expand.transform_numeric <- function(x, i, data, w, qs=seq(0.20, 0.8, 0.2)) {
   check_inputs(x, i)
+
+  fac <- transform(x, data)
+  f <- fac == levels(fac)[i]
+  ## get new cuts
+  q <- Hmisc::wtd.quantile(data[f], weights = w[f], qs)
+
+  cuts <- sapply(x$mapping, "[[", "right")
+  new_cuts <- append(cuts[-i], unique(q), i-1)
+  res <- new_transform_numeric(new_cuts)
+  x$mapping <- res$mapping
+  x$weights <- NULL
+  x
 }
 
 
