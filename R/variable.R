@@ -78,6 +78,7 @@ undo <- function(v) {
 #' @export
 transform.variable <- function(x, newx=x$x, type=c("factor", "sparse", "perf"), perf=NULL) {
 
+  print(class(x))
   f <- transform(x$tf, newx)
   neutral <- match(unlist(x$tf$neutral), levels(f), 0)
 

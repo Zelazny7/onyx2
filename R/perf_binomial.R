@@ -46,3 +46,82 @@ make_table.perf_binomial <- function(perf, x, ...) {
 
 #' @export
 perf_col.perf_binomial <- function(x) "WoE"
+
+
+#' @export
+plot_data <- function(perf, tbl, x, ...) {
+  if (missing(tbl)) tbl <- make_table(perf, x)
+
+  ## store everything needed to plot in a list
+  tmp <- head(tbl, -1)
+  lbls <- rev(row.names(tmp))
+
+  data <- list(
+    text = list(
+      list(
+        value = lbls,
+        margin = "left"
+      ),
+      list(
+        value = sprintf("%0.1f%%", rev(tmp[,"%N"] * 100)),
+        margin = "right"
+      )
+    ),
+    series = list(
+      list(
+        values = rev(tmp[,"WoE"]),
+        label = "Weight of Evidence",
+        color = "red"
+      )
+    )
+  )
+
+  class(data) <- "plot_data_perf_binomial"
+  data
+
+}
+
+make_bars_ <- function(v, width=0.70, ...) {
+  left <- pmin(v, 0)
+  right <- pmax(v, 0)
+  center <- seq_along(left)
+  top <- center - 0.5 * width
+  bottom <- center + 0.5 * width
+  rect(left, bottom, right, top, ...)
+  center
+}
+
+
+#' @export
+plot.plot_data_perf_binomial <- function(plt) {
+
+  on.exit(par(oma=rep(0, 4))) # restore them on exit
+
+  lbls <- plt$text[[1]]$value
+  woe <- plt$series[[1]]$values
+
+  xlim <-  range(woe) + c(-0.5, 0.5)
+  width <- max(nchar(plt$text[[1]]$value))
+  par(oma=c(0, width/6, 0, 0))
+
+
+
+  graphics::plot(NA, xlim=xlim, ylim=c(0.5, length(woe) + 0.5),
+                 xlab = plt$series[[1]]$label, ylab=NA, yaxt="n", main = "Plot Test")
+
+
+  abline(v = 0, lty=3)
+  center <- make_bars_(woe, col=rgb(0, 0, 0, alpha = 0.30))
+
+  text(x = min(xlim), y = center, labels =
+         sprintf(" [%02d]", rev(seq_along(lbls))), cex=0.80)
+
+  text(x = max(xlim) - 0.1, y = center, labels = plt$text[[2]]$value, cex=0.80)
+
+  axis(side = 2, labels = lbls, at = center, las = 2, lwd.ticks = 0,
+       cex.axis = 0.80)
+
+
+
+}
+

@@ -81,7 +81,8 @@ Scorecard <- setRefClass(
 
     transform = function(newx, type=c("factor", "sparse", "perf"), pf=perf[[1]]) {
 
-      res <- mapply(transform.variable, variables[names(newx)], newx,
+      v <- names(variables)
+      res <- mapply(transform.variable, variables[v], newx[v],
                     MoreArgs = list(
                       type=match.arg(type),
                       perf=pf),
@@ -123,6 +124,8 @@ Scorecard <- setRefClass(
       tables <- lapply(factors, function(x) make_table(perf[[1]], x))
 
       x <- transform(newx[v], type="perf")
+      ## browser()
+
       mod <- glmnet::cv.glmnet(x, y=perf[[1]]$y, w=perf[[1]]$w,
                         alpha=alpha,
                         nfolds=nfolds,

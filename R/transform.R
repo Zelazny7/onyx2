@@ -60,6 +60,7 @@ update_transforms_binnr <- function(tfs, tbls, coefs, perf) {
   ## loop over coefficients
   for (v in names(coefs)) {
     weights <- head(tbls[[v]][,perf], -1) * coefs[[v]]
+    weights[unlist(tfs[[v]]$neutral)] <- tbls[[v]]['Total',perf_col(perf)]
     tfs[[v]]$weights <- weights
   }
   tfs

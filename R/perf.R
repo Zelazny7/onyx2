@@ -19,6 +19,9 @@ make_table <- function(perf, x, ...) UseMethod("make_table")
 #make_table <- memoise::memoise(function(perf, x, ...) UseMethod("make_table"))
 
 
+#' @export
+plot_data <- function(perf, tbl, x, ...) UseMethod("plot_data")
+
 ## Returns the name of the column to be used for WoE substitution
 
 #' @export
